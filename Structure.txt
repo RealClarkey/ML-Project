@@ -1,0 +1,18 @@
+backend/
+├── main.py                 # FastAPI app
+├── models.py               # Pydantic models
+├── ml/                     # Machine learning logic
+│   ├── preprocess.py
+│   ├── train.py
+├── requirements.txt
+
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   ├── App.tsx
+│   ├── api.ts               # Axios/fetch wrapper
+├── public/
+├── tailwind.config.js
+├── tsconfig.json
+├── package.json
