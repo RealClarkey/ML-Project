@@ -15,4 +15,4 @@ app.add_middleware(
 @app.post("/upload_csv/")
 async def upload_csv(file: UploadFile = File(...)):
     df = pd.read_csv(file.file)
-    return {"columns": df.columns.tolist(), "rows": len(df)}
+    return {"columns": df.columns.tolist(), "rows": df.head().to_dict(orient="records")}

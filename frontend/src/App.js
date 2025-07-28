@@ -41,12 +41,31 @@ function App() {
       </form>
 
       {response && (
-        <div style={{ marginTop: '2rem' }}>
-          <h3>CSV Info:</h3>
-          <p><strong>Columns:</strong> {response.columns.join(', ')}</p>
-          <p><strong>Rows:</strong> {response.row_count}</p>
-        </div>
-      )}
+  <div style={{ marginTop: '2rem' }}>
+    <h3>CSV Info:</h3>
+    <p><strong>Columns:</strong> {response.columns.join(', ')}</p>
+
+    <table border="1" cellPadding="6" style={{ marginTop: '1rem' }}>
+      <thead>
+        <tr>
+          {response.columns.map((col, index) => (
+            <th key={index}>{col}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {response.rows.map((row, rowIndex) => (
+          <tr key={rowIndex}>
+            {response.columns.map((col, colIndex) => (
+              <td key={colIndex}>{row[col]}</td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
+
     </div>
   );
 }
