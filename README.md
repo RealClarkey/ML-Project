@@ -2,8 +2,6 @@
 
 This project is a full-stack web application template designed to simplify building Machine Learning Software as a Service (SaaS).
 
-## Overview
-
 Users can upload their datasets, select a target variable for prediction, and let the backend handle preprocessing. Afterwards, users can choose from multiple machine learning models and adjust hyperparameters to fit their needs.
 
 ## Features
