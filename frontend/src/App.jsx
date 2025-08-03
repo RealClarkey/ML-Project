@@ -33,8 +33,13 @@ const App = () => {
       </nav>
       <main className="main-content">
         <h1>Lets Get Started</h1>
-        <h2>Upload Your Dataset:</h2>
-        {!datasetId && <CSVUploadForm onUploadSuccess={handleUploadSuccess} />}
+
+        {!datasetId && (
+            <>
+                <h2>Upload Your Dataset:</h2>
+                <CSVUploadForm onUploadSuccess={handleUploadSuccess} />
+            </>
+        )}
 
       {datasetId && (
         <>
