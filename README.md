@@ -1,9 +1,41 @@
+# ML Project - Machine Learning SaaS Template
+
+This project is a full-stack web application template designed to simplify building Machine Learning Software as a Service (SaaS).
+
+## Overview
+
+Users can upload their datasets, select a target variable for prediction, and let the backend handle preprocessing. Afterwards, users can choose from multiple machine learning models and adjust hyperparameters to fit their needs.
+
+## Features
+
+- Upload CSV datasets easily  
+- Select the target column for prediction  
+- Automatic backend preprocessing of data  
+- Choose between different ML models  
+- Hyperparameter tuning interface  
+
+## Technology Stack
+
+- **Frontend:** React, Axios  
+- **Backend:** FastAPI (Python)  
+- **Python Libraries:** pandas, scikit-learn, pydantic  
+- **Middleware:** CORSMiddleware for cross-origin requests  
+- **Database:** [Your DB here, e.g., SQLite, PostgreSQL, MongoDB]  
+
+## Stage 1: - Completed
+- Complete setup of the stack.
+- Ability to upload datasets (CSVs), which are saved locally and stored in a database (currently using a simple DB, planned upgrade later).
+- Choose the predicted column.
+- Display top 10 rows.
+![Demo](GitGIFS/Stage1.gif)
+
 ## Stage 2:
 - Implement backend data preprocessing (handle missing values, encoding categorical variables, normalization, etc.)
 - Display processed data summary and statistics to the user
 - Provide multiple regression and classification models (e.g., Linear Regression, Decision Trees, Random Forest, Logistic Regression)
 - Allow users to select ML models and configure basic hyperparameters
 - Run training and display evaluation metrics (e.g., accuracy, RMSE)
+- Implement use of SQLite DB.
 
 ## Stage 3:
 - Add advanced hyperparameter tuning options (grid search, random search)
