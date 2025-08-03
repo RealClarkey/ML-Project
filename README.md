@@ -22,11 +22,12 @@ Users can upload their datasets, select a target variable for prediction, and le
 - **Middleware:** CORSMiddleware for cross-origin requests  
 - **Database:** [Your DB here, e.g., SQLite, PostgreSQL, MongoDB]  
 
-## Stage 1: - Completed
+## Stage 1: - Completed ✅
 - Complete setup of the stack.
 - Ability to upload datasets (CSVs), which are saved locally and stored in a database (currently using a simple DB, planned upgrade later).
 - Choose the predicted column.
 - Display top 10 rows.
+  
 ![Demo](GitGIFS/Stage1.gif)
 
 ## Stage 2:
