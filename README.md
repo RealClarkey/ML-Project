@@ -25,6 +25,7 @@ Users can upload their datasets, select a target variable for prediction, and le
 - Ability to upload datasets (CSVs), which are saved locally and stored in a database (currently using a simple DB, planned upgrade later).
 - Choose the predicted column.
 - Display top 10 rows.
+- Uploaded CSVs are also converted to Pandas DataFrames and saved as .pkl (pickle) files for reuse.
   
 ![Demo](GitGIFS/Stage1.gif)
 
