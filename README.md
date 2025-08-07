@@ -29,14 +29,14 @@ Users can upload their datasets, select a target variable for prediction, and le
   
 ![Demo](GitGIFS/Stage1.gif)
 
-## Stage 2:
-- Implement backend data preprocessing (handle missing values, encoding categorical variables, normalization, etc.)
-- Display processed data summary and statistics to the user
+## Stage 2: - In Progress 30%
 - Implement User login (AWS Cognito integration)
+- Implement use of S3 DB.
+- Implement Data Analysis of DataFrame and present to user.
+- Implement backend data preprocessing (handle missing values, encoding categorical variables, normalization, etc.)
 - Provide multiple regression and classification models (e.g., Linear Regression, Decision Trees, Random Forest, Logistic Regression)
 - Allow users to select ML models and configure basic hyperparameters
 - Run training and display evaluation metrics (e.g., accuracy, RMSE)
-- Implement use of S3 DB.
 
 ## Stage 3:
 - Add advanced hyperparameter tuning options (grid search, random search)
