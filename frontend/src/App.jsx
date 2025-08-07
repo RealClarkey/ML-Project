@@ -78,6 +78,18 @@ const App = () => {
             {preprocessInfo && (
               <div>
                 <p>{preprocessInfo.message}</p>
+                <p>Missing Values:</p>
+                <ul>
+                  {Object.entries(preprocessInfo.missing_values || {}).map(([col, count]) => (
+                  <li key={col}>{col}: {count}</li>
+                  ))}
+                </ul>
+                <h3>Data Types:</h3>
+                <ul>
+                  {Object.entries(preprocessInfo.column_types || {}).map(([col, dtype]) => (
+                  <li key={col}>{col}: {dtype}</li>
+                  ))}
+                </ul>
                 <p>Number of rows: {preprocessInfo.num_rows}</p>
                 <p>Columns:</p>
                 <ul>
@@ -87,6 +99,35 @@ const App = () => {
                 </ul>
               </div>
             )}
+
+            {preprocessInfo?.summary && (
+              <>
+                <h3>Summary Statistics:</h3>
+                <table border="1">
+                  <thead>
+                    <tr>
+                      <th>Stat</th>
+                      {Object.keys(preprocessInfo.summary).map((col) => (
+                        <th key={col}>{col}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.keys(preprocessInfo.summary[Object.keys(preprocessInfo.summary)[0]]).map((stat) => (
+                      <tr key={stat}>
+                        <td>{stat}</td>
+                        {Object.keys(preprocessInfo.summary).map((col) => (
+                          <td key={col + stat}>
+                            {preprocessInfo.summary[col]?.[stat]?.toFixed(2)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+              )}
+
 
             <h2>Select Target Column</h2>
             <select value={targetColumn} onChange={(e) => setTargetColumn(e.target.value)}>

@@ -9,7 +9,13 @@ class DataFrameStore:
 
     def save_csv_and_df(self, contents, original_filename):
         # Generate a unique base name (without extension)
-        dataset_id = str(uuid.uuid4())
+        # dataset_id = str(uuid.uuid4())
+
+        #Use original file name but add unique user to the end.
+        base_name = os.path.splitext(original_filename)[0]
+        safe_name = base_name.replace(" ", "_").lower()
+        dataset_id = f"{safe_name}_user" #user will be changed to username when adding membership.
+
         csv_filename = f"{dataset_id}.csv"
         pkl_filename = f"{dataset_id}.pkl"
 

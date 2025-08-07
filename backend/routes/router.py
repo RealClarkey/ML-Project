@@ -4,6 +4,7 @@ import os
 import pandas as pd
 from backend.dataset_handler import DatasetHandler
 from backend.dataform_store import DataFrameStore
+from backend.preprocessing import preprocessing
 
 router = APIRouter()
 store = DataFrameStore()
@@ -18,26 +19,17 @@ class PreprocessRequest(BaseModel):
 
 @router.post("/begin_preprocessing")
 def begin_preprocessing(req: PreprocessRequest):
-    dataset_path = os.path.join(UPLOAD_DIR, req.dataset_id)
-    if not os.path.isfile(dataset_path):
-        raise HTTPException(status_code=404, detail="Dataset not found")
-
     try:
-        df = pd.read_csv(dataset_path)
+        df = preprocessing.load_dataframe(req.dataset_id)
+        summary = preprocessing.get_preprocessing_summary(df)
+        return {
+            "message": "Preprocessing ready",
+            **summary  # includes columns, types, missing values, etc.
+        }
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Dataset not found")
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to read CSV: {e}")
-
-    # Example info to return
-    columns = df.columns.tolist()
-    num_rows = len(df)
-
-    # You could optionally save this dataframe somewhere or cache it for later use
-    # For now, just confirm success
-    return {
-        "message": "Preprocessing started",
-        "columns": columns,
-        "num_rows": num_rows
-    }
+        raise HTTPException(status_code=500, detail=f"Preprocessing failed: {str(e)}")
 
 @router.post("/upload_csv")
 async def upload_csv(file: UploadFile = File(...)):
@@ -63,7 +55,15 @@ class TopRowsRequest(BaseModel):
 
 @router.post("/top_rows")
 def top_rows(req: TopRowsRequest):
-    top_rows = dataset_handler.get_top_rows(req.dataset_id)
-    if top_rows is None:
-        return {"error": "Dataset not found"}
-    return {"top_rows": top_rows}
+    dataset_id = req.dataset_id.replace(".csv", "")  # Remove if user includes ".csv"
+
+    df_path = os.path.join("backend/datasets", f"{dataset_id}.pkl")
+    if not os.path.isfile(df_path):
+        raise HTTPException(status_code=404, detail="Dataset not found")
+
+    try:
+        df = pd.read_pickle(df_path)
+        top = df.head(10).to_dict(orient="records")
+        return {"top_rows": top}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load DataFrame: {str(e)}")
