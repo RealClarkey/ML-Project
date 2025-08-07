@@ -15,10 +15,10 @@ Users can upload their datasets, select a target variable for prediction, and le
 ## Technology Stack
 
 - **Frontend:** React, Axios  
-- **Backend:** FastAPI (Python)  
+- **Backend:** FastAPI (Python), CORSMiddleware  
 - **Python Libraries:** pandas, scikit-learn, pydantic  
-- **Middleware:** CORSMiddleware for cross-origin requests  
-- **Database:** AWS Cognito and S3  
+- **Authentication:** AWS Cognito  
+- **Database:** AWS S3 (datasets, uploads)  
 
 ## Stage 1: - Completed ✅
 - Complete setup of the stack.
