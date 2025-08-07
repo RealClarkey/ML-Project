@@ -1,10 +1,15 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from pydantic import BaseModel
+from fastapi.responses import JSONResponse
+from datetime import datetime
+from pathlib import Path
 import os
 import pandas as pd
+
+
 from backend.dataset_handler import DatasetHandler
 from backend.dataform_store import DataFrameStore
-from backend.preprocessing import preprocessing
+from backend.preprocessing import dataanalysis
 
 router = APIRouter()
 store = DataFrameStore()
@@ -20,8 +25,8 @@ class PreprocessRequest(BaseModel):
 @router.post("/begin_preprocessing")
 def begin_preprocessing(req: PreprocessRequest):
     try:
-        df = preprocessing.load_dataframe(req.dataset_id)
-        summary = preprocessing.get_preprocessing_summary(df)
+        df = dataanalysis.load_dataframe(req.dataset_id)
+        summary = dataanalysis.get_dataanalysis_summary(df)
         return {
             "message": "Preprocessing ready",
             **summary  # includes columns, types, missing values, etc.
@@ -67,3 +72,20 @@ def top_rows(req: TopRowsRequest):
         return {"top_rows": top}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to load DataFrame: {str(e)}")
+
+@router.get("/datasets")
+def list_datasets():
+    datasets_dir = Path(UPLOAD_DIR)
+    if not datasets_dir.exists():
+        return []
+
+    datasets = []
+    for file in datasets_dir.glob("*.pkl"):  # only show .pkl files
+        datasets.append({
+            "id": file.stem,  # e.g. "mydata"
+            "name": file.name,  # e.g. "mydata.pkl"
+            "format": file.suffix[1:],  # e.g. "pkl"
+            "uploadedAt": datetime.fromtimestamp(file.stat().st_mtime).isoformat()
+        })
+
+    return JSONResponse(content=datasets)

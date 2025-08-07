@@ -13,7 +13,7 @@ def load_dataframe(dataset_id: str):
     return pd.read_pickle(df_path)
 
 
-def get_preprocessing_summary(df: pd.DataFrame):
+def get_dataanalysis_summary(df: pd.DataFrame):
     return {
         "columns": df.columns.tolist(),
         "num_rows": len(df),

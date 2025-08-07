@@ -1,9 +1,11 @@
-import axios from 'axios';
+// src/api.js
+import axios from "axios";
+import { UserManager } from "oidc-client-ts"; // not strictly needed if you pass tokens manually
+// (or just pull the token in components and set headers per request)
 
-// Create an instance of axios with the base URL
 const api = axios.create({
-  baseURL: "http://localhost:8000"
+  baseURL: "http://localhost:8000",
 });
 
-// Export the Axios instance
+// Later: you can set Authorization from components when you have auth.user.access_token
 export default api;

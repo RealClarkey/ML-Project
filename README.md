@@ -18,7 +18,7 @@ Users can upload their datasets, select a target variable for prediction, and le
 - **Backend:** FastAPI (Python)  
 - **Python Libraries:** pandas, scikit-learn, pydantic  
 - **Middleware:** CORSMiddleware for cross-origin requests  
-- **Database:** SQLite  
+- **Database:** AWS Cognito and S3  
 
 ## Stage 1: - Completed ✅
 - Complete setup of the stack.
@@ -32,10 +32,11 @@ Users can upload their datasets, select a target variable for prediction, and le
 ## Stage 2:
 - Implement backend data preprocessing (handle missing values, encoding categorical variables, normalization, etc.)
 - Display processed data summary and statistics to the user
+- Implement User login (AWS Cognito integration)
 - Provide multiple regression and classification models (e.g., Linear Regression, Decision Trees, Random Forest, Logistic Regression)
 - Allow users to select ML models and configure basic hyperparameters
 - Run training and display evaluation metrics (e.g., accuracy, RMSE)
-- Implement use of SQLite DB.
+- Implement use of S3 DB.
 
 ## Stage 3:
 - Add advanced hyperparameter tuning options (grid search, random search)
