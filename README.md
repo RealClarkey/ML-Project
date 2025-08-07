@@ -18,7 +18,7 @@ Users can upload their datasets, select a target variable for prediction, and le
 - **Backend:** FastAPI (Python)  
 - **Python Libraries:** pandas, scikit-learn, pydantic  
 - **Middleware:** CORSMiddleware for cross-origin requests  
-- **Database:** [Your DB here, e.g., SQLite, PostgreSQL, MongoDB]  
+- **Database:** SQLite  
 
 ## Stage 1: - Completed ✅
 - Complete setup of the stack.
