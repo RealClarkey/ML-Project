@@ -6,6 +6,8 @@ import DatasetList from '../components/DatasetList';
 import DashboardLayout from '../components/DashboardLayout';
 import api from '../api';
 import '../App.css';
+import { setApiToken} from "../api";
+
 
 const MemberHome = () => {
   const auth = useAuth();
@@ -40,11 +42,12 @@ const MemberHome = () => {
       console.error('Failed to fetch datasets:', error);
     }
   };
-
-  // Load datasets after user is authenticated (and when token changes)
   useEffect(() => {
     if (auth.isAuthenticated) {
+      setApiToken(auth.user?.access_token);
       fetchDatasets();
+    } else {
+      setApiToken(null);
     }
   }, [auth.isAuthenticated, auth.user?.access_token]);
 

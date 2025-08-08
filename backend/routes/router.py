@@ -1,91 +1,101 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+# backend/routes/router.py
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from pydantic import BaseModel
+import os, io, pandas as pd, boto3
 from fastapi.responses import JSONResponse
-from datetime import datetime
-from pathlib import Path
-import os
-import pandas as pd
 
-
-from backend.dataset_handler import DatasetHandler
-from backend.dataform_store import DataFrameStore
 from backend.preprocessing import dataanalysis
-
-router = APIRouter()
-store = DataFrameStore()
-
-UPLOAD_DIR = "backend/datasets"
-dataset_handler = DatasetHandler(UPLOAD_DIR)
+from .s3_utils import s3_dataset_key, put_bytes, put_pickle_df, get_pickle_df, S3_BUCKET
+from backend.auth import verify_cognito_token   # <-- add
 
 router = APIRouter()
 
 class PreprocessRequest(BaseModel):
     dataset_id: str
 
-@router.post("/begin_preprocessing")
-def begin_preprocessing(req: PreprocessRequest):
-    try:
-        df = dataanalysis.load_dataframe(req.dataset_id)
-        summary = dataanalysis.get_dataanalysis_summary(df)
-        return {
-            "message": "Preprocessing ready",
-            **summary  # includes columns, types, missing values, etc.
-        }
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="Dataset not found")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Preprocessing failed: {str(e)}")
-
-@router.post("/upload_csv")
-async def upload_csv(file: UploadFile = File(...)):
-    if not file.filename.endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Only CSV files are supported")
-
-    contents = await file.read()
-    try:
-        result = store.save_csv_and_df(contents, file.filename)
-        return {
-            "message": "Upload successful",
-            "dataset_id": result["dataset_id"],
-            "original_filename": result["original_filename"],
-            "columns": result["columns"],
-            "num_rows": result["num_rows"]
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to process dataset: {str(e)}")
-
 class TopRowsRequest(BaseModel):
     dataset_id: str
     target_column: str
 
-@router.post("/top_rows")
-def top_rows(req: TopRowsRequest):
-    dataset_id = req.dataset_id.replace(".csv", "")  # Remove if user includes ".csv"
+@router.post("/upload_csv")
+async def upload_csv(
+    file: UploadFile = File(...),
+    claims = Depends(verify_cognito_token),      # <-- add
+):
+    user_sub = claims["sub"]                     # <-- real user id
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are supported")
 
-    df_path = os.path.join("backend/datasets", f"{dataset_id}.pkl")
-    if not os.path.isfile(df_path):
-        raise HTTPException(status_code=404, detail="Dataset not found")
+    raw = await file.read()
+    try:
+        csv_key = s3_dataset_key(user_sub, file.filename)
+        put_bytes(csv_key, raw, "text/csv")
+
+        df = pd.read_csv(io.BytesIO(raw))
+        pkl_key = csv_key.rsplit(".", 1)[0] + ".pkl"
+        put_pickle_df(pkl_key, df)
+
+        return {
+            "message": "Upload successful",
+            "dataset_id": pkl_key,
+            "original_filename": file.filename,
+            "columns": list(df.columns),
+            "num_rows": len(df),
+            "s3": {"csv": csv_key, "pkl": pkl_key},
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to process dataset: {e}")
+
+@router.get("/datasets")
+def list_datasets(
+    claims = Depends(verify_cognito_token),      # <-- add
+):
+    user_sub = claims["sub"]
+    s3 = boto3.client("s3", region_name=os.environ.get("AWS_REGION", "eu-north-1"))
+    prefix = f"{user_sub}/datasets/"
+    resp = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix=prefix)
+
+    datasets = []
+    for obj in resp.get("Contents", []):
+        key = obj["Key"]
+        if key.endswith(".pkl"):
+            datasets.append({
+                "id": key,
+                "name": key.split("/")[-1],
+                "format": "pkl",
+                "uploadedAt": obj["LastModified"].isoformat(),
+            })
+    return JSONResponse(content=datasets)
+
+@router.post("/begin_preprocessing")
+def begin_preprocessing(
+    req: PreprocessRequest,
+    claims = Depends(verify_cognito_token),      # <-- add
+):
+    user_sub = claims["sub"]
+    if not req.dataset_id.startswith(f"{user_sub}/"):
+        raise HTTPException(status_code=403, detail="Not your dataset")
 
     try:
-        df = pd.read_pickle(df_path)
+        df = get_pickle_df(req.dataset_id)
+        summary = dataanalysis.get_dataanalysis_summary(df)
+        return {"message": "Preprocessing ready", **summary}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Preprocessing failed: {e}")
+
+@router.post("/top_rows")
+def top_rows(
+    req: TopRowsRequest,
+    claims = Depends(verify_cognito_token),      # <-- add
+):
+    user_sub = claims["sub"]
+    key = req.dataset_id if req.dataset_id.endswith(".pkl") else f"{req.dataset_id}.pkl"
+    if not key.startswith(f"{user_sub}/"):
+        raise HTTPException(status_code=403, detail="Not your dataset")
+
+    try:
+        df = get_pickle_df(key)
         top = df.head(10).to_dict(orient="records")
         return {"top_rows": top}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to load DataFrame: {str(e)}")
-
-@router.get("/datasets")
-def list_datasets():
-    datasets_dir = Path(UPLOAD_DIR)
-    if not datasets_dir.exists():
-        return []
-
-    datasets = []
-    for file in datasets_dir.glob("*.pkl"):  # only show .pkl files
-        datasets.append({
-            "id": file.stem,  # e.g. "mydata"
-            "name": file.name,  # e.g. "mydata.pkl"
-            "format": file.suffix[1:],  # e.g. "pkl"
-            "uploadedAt": datetime.fromtimestamp(file.stat().st_mtime).isoformat()
-        })
-
-    return JSONResponse(content=datasets)
+        raise HTTPException(status_code=500, detail=f"Failed to load DataFrame: {e}")
