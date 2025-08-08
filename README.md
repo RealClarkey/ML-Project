@@ -29,7 +29,7 @@ Users can upload their datasets, select a target variable for prediction, and le
   
 ![Demo](GitGIFS/Stage1.gif)
 
-## Stage 2: - In Progress 30%
+## Stage 2: - In Progress 42%
 - Implement User login (AWS Cognito integration) coupled with member dashboard.
 - Implement use of S3 DB.
 - Implement Data Analysis of DataFrame and present to user.

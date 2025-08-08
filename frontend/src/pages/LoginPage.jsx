@@ -82,7 +82,7 @@ export default function LoginPage() {
               onClick={() => auth.signinRedirect()}
               sx={{ py: 1, borderRadius: 2, textTransform: "none", fontWeight: 700 }}
             >
-              Continue with Cognito
+              Login Here!
             </Button>
 
             <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
