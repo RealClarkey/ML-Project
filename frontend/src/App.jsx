@@ -5,6 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import MemberHome from "./pages/MemberHome";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+
 const App = () => (
   <Router>
     <Routes>
