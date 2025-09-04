@@ -35,7 +35,7 @@ export default function S3BucketFiles() {
   const columns = React.useMemo(
     () =>
       s3Columns({
-        onDownload: (item) => window.open(item.downloadUrl ?? "#", "_blank"),
+        onDownload: (item) => window.open(item.downloadUrl, "_blank"),
         onDelete: async (item) => {
           await api.delete(`/datasets?key=${encodeURIComponent(item.key)}`, {
             headers: { Authorization: `Bearer ${auth.user?.access_token}` },

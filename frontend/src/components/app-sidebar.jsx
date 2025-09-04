@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Plus, LineChart, SlidersHorizontal, BrainCircuit } from "lucide-react"
+import { Plus, LineChart, SlidersHorizontal, BrainCircuit, House } from "lucide-react"
 import { useAuth } from "react-oidc-context"
 import { Link, useLocation } from "react-router-dom"
 import { NavUser } from "@/components/nav-user"
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sidebar"
 
 const navItems = [
+  { label: "Home",        to: "/member",       icon: House},
   { label: "Analyse",        to: "/analyse",       icon: LineChart },
   { label: "Preprocessing",  to: "/preprocessing", icon: SlidersHorizontal },
   { label: "ML Models",      to: "/models",        icon: BrainCircuit },

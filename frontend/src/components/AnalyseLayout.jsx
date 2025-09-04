@@ -6,7 +6,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import DropzoneTile from "@/components/ui/dropzone"
 import S3BucketFiles from "@/components/ui/S3BucketFiles"
 
-export default function DashboardLayout() {
+export default function AnalyseLayout() {
   const [items, setItems] = React.useState([])
 
   const handleAnalyse = (item) => { /* call backend */ }
@@ -23,7 +23,7 @@ export default function DashboardLayout() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbPage>Member Home</BreadcrumbPage>
+                <BreadcrumbPage>Analyse</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
@@ -32,14 +32,7 @@ export default function DashboardLayout() {
         <div className="flex flex-1 flex-col gap-4 p-4">
           <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
             {/* Upload tile */}
-            <div className="h-40 md:col-span-3 rounded-xl border bg-card p-4 flex flex-col">
-              <div className="flex-1">
-                <DropzoneTile />
-              </div>
-              <ul className="mt-3 max-h-16 overflow-auto text-sm">
-                {/* upload statuses */}
-              </ul>
-            </div>
+
 
             {/* Files table */}
             <div className="md:col-span-3 rounded-xl border bg-card p-4">

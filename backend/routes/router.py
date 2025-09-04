@@ -59,12 +59,18 @@ def list_datasets(
     for obj in resp.get("Contents", []):
         key = obj["Key"]
         if key.endswith(".pkl"):
+            url = s3.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": S3_BUCKET, "Key": key},
+                ExpiresIn=3600,
+            )
             datasets.append({
                 "id": key,
                 "key": key,
                 "name": key.split("/")[-1],
                 "format": "pkl",
                 "uploadedAt": obj["LastModified"].isoformat(),
+                "downloadUrl": url,
             })
     return JSONResponse(content=datasets)
 # Delete dataset from S3 bucket.

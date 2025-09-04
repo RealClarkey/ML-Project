@@ -64,7 +64,7 @@ const formatDate = (d) =>
   }).format(d)
 
 // columns factory
-export function s3Columns({ onAnalyse, onDownload, onDelete } = {}) {
+export function s3Columns({ onDownload, onDelete } = {}) {
   return [
     {
       id: "select",
