@@ -34,6 +34,8 @@ Users can upload their datasets, select a target variable for prediction, and le
 - ShadCN installed and configured (Tailwind, components/ui/)
 - Login and Member Area upgraded using ShadCN components.
 
+![ShadCN Upgrade](GitIMGS/shadcn-upgrade.png)
+
 ## Stage 2: - In Progress 42%
 - Implement User login (AWS Cognito integration) coupled with member dashboard.
 - Implement use of S3 DB.
