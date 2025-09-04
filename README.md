@@ -9,7 +9,6 @@ Users can upload their datasets, select a target variable for prediction, and le
 - Upload CSV datasets easily  
 - Select the target column for prediction  
 - Automatic backend preprocessing of data
-- 
 - Choose between different ML models  
 - Hyperparameter tuning interface  
 
