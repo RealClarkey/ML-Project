@@ -96,47 +96,51 @@ export default function AnalyseLayout() {
               {error && <p className="mt-2 text-sm" style={{ color: "#d32f2f" }}>{error}</p>}
             </div>
 
-            {/* Card: Missing Values + Data Types (always visible) */}
-            <div className="md:col-span-3 rounded-xl border bg-card p-4 space-y-3">
-              <h2 className="text-lg font-semibold">Missing Values and Data Types</h2>
+            {/* --- Insights: two side-by-side cards --- */}
+            <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Missing Values */}
+              <div className="rounded-xl border bg-card p-4 space-y-3">
+                <h2 className="text-lg font-semibold">Missing Values</h2>
 
-              {!summary && !isAnalysing && (
-                <p className="text-sm text-muted-foreground">
-                  Click <span className="font-medium">Analyse selected</span> to generate a summary for the chosen dataset.
-                </p>
-              )}
+                {!summary && !isAnalysing && (
+                  <p className="text-sm text-muted-foreground">
+                    Click <span className="font-medium">Analyse selected</span> to compute missing values.
+                  </p>
+                )}
+                {isAnalysing && (
+                  <p className="text-sm text-muted-foreground">Running preprocessing…</p>
+                )}
 
-              {isAnalysing && (
-                <p className="text-sm text-muted-foreground">Running preprocessing…</p>
-              )}
+                {summary?.missing_values && (
+                  <ul className="list-disc pl-5">
+                    {Object.entries(summary.missing_values).map(([col, cnt]) => (
+                      <li key={col}>{col}: {cnt}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
 
-              {summary && (
-                <>
-                  {summary.message && <p>{summary.message}</p>}
+              {/* Data Types */}
+              <div className="rounded-xl border bg-card p-4 space-y-3">
+                <h2 className="text-lg font-semibold">Data Types</h2>
 
-                  {summary.missing_values && (
-                    <>
-                      <h3 className="font-medium">Missing Values</h3>
-                      <ul className="list-disc pl-5">
-                        {Object.entries(summary.missing_values).map(([c, n]) => (
-                          <li key={c}>{c}: {n}</li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
+                {!summary && !isAnalysing && (
+                  <p className="text-sm text-muted-foreground">
+                    Click <span className="font-medium">Analyse selected</span> to detect column types.
+                  </p>
+                )}
+                {isAnalysing && (
+                  <p className="text-sm text-muted-foreground">Running preprocessing…</p>
+                )}
 
-                  {summary.column_types && (
-                    <>
-                      <h3 className="font-medium">Data Types</h3>
-                      <ul className="list-disc pl-5">
-                        {Object.entries(summary.column_types).map(([c, t]) => (
-                          <li key={c}>{c}: {t}</li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-                </>
-              )}
+                {summary?.column_types && (
+                  <ul className="list-disc pl-5">
+                    {Object.entries(summary.column_types).map(([col, dtype]) => (
+                      <li key={col}>{col}: {dtype}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
 
             {/* Card: Top 10 Rows (always visible) */}
