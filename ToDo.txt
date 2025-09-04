@@ -1,0 +1,16 @@
+Structure:
+Look into creating a generic dashboard layout...
+so this can be duplicated for the other pages.
+
+MemberArea:
+Download button within table
+DropZone restrictions on file type (.csv)
+
+Analyse:
+Begin this page.
+
+Preprocessing:
+Begin this page.
+
+ML Models:
+Begin this page.
