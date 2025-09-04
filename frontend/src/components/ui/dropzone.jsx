@@ -59,7 +59,7 @@ export default function DropzoneTile() {
     <div className="w-full h-full">
       <Dropzone
         className="w-full h-full p-4 border border-dashed rounded-xl flex items-center justify-center"
-        accept={{ "text/csv": [".csv"] }}
+        accept={{ ".csv files": [".csv"] }}
         maxFiles={10}
         maxSize={50 * 1024 * 1024}
         onDrop={handleDrop}

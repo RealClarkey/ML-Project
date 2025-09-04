@@ -1,9 +1,9 @@
 # backend/routes/router.py
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Query
 from pydantic import BaseModel
 import os, io, pandas as pd, boto3
 from fastapi.responses import JSONResponse
-
+from botocore.exceptions import ClientError
 from backend.preprocessing import dataanalysis
 from .s3_utils import s3_dataset_key, put_bytes, put_pickle_df, get_pickle_df, S3_BUCKET
 from backend.auth import verify_cognito_token   # <-- add
@@ -61,11 +61,44 @@ def list_datasets(
         if key.endswith(".pkl"):
             datasets.append({
                 "id": key,
+                "key": key,
                 "name": key.split("/")[-1],
                 "format": "pkl",
                 "uploadedAt": obj["LastModified"].isoformat(),
             })
     return JSONResponse(content=datasets)
+# Delete dataset from S3 bucket.
+# Used from the data table field in membership area.
+@router.delete("/datasets")
+def delete_dataset(
+        key: str = Query(..., description="S3 object key of the dataset (e.g. <sub>/datasets/foo.pkl)"),
+        claims=Depends(verify_cognito_token),
+):
+    user_sub = claims["sub"]
+    first_segment = key.split("/", 1)[0]
+    if first_segment != user_sub:
+        raise HTTPException(status_code=403, detail="Not your dataset")
+
+    s3 = boto3.client("s3", region_name=os.environ.get("AWS_REGION", "eu-north-1"))
+
+    #Deleting the plk file
+    try:
+        s3.delete_object(Bucket=S3_BUCKET, Key=key)
+    except ClientError as e:
+        code = e.response["Error"]["Code"]
+        if code in ("NoSuchKey", "404"):
+            raise HTTPException(status_code=404, detail=f"Dataset not found")
+        raise HTTPException(status_code=500, detail=f"Failed to delete dataset: {e}")
+
+    #Deleting the associated .csv file
+    if key.endswith(".pkl"):
+        csv_key = key[:-4] + ".csv"
+        try:
+            s3.delete_object(Bucket=S3_BUCKET, Key=csv_key)
+        except ClientError:
+            pass
+
+    return {"ok": True, "deleted": key}
 
 @router.post("/begin_preprocessing")
 def begin_preprocessing(
