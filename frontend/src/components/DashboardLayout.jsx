@@ -1,77 +1,70 @@
-// src/components/DashboardLayout.jsx
-import React from 'react';
-import { Box, Drawer, AppBar, Toolbar, Typography, IconButton, Avatar } from '@mui/material';
-import { useAuth } from "react-oidc-context";
-import MenuIcon from '@mui/icons-material/Menu';
+import { AppSidebar } from "@/components/app-sidebar"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+import S3BucketFiles from "@/components/ui/S3BucketFiles.jsx"
+import DropzoneTile from "@/components/ui/dropzone.jsx"
+import React from "react";
 
-const drawerWidth = 240;
-const COGNITO_DOMAIN = "https://eu-north-1vx4lzvaon.auth.eu-north-1.amazoncognito.com";
-const CLIENT_ID = "5al6bqqs0k4pmcm35d3d7vjt02";
-const LOGOUT_REDIRECT = "http://localhost:5173";
+export default function Page() {
 
-const DashboardLayout = ({ children }) => {
-    const auth = useAuth();
-    const handleLogout = async () => {
-        // 1) Clear local tokens (so app thinks you're logged out)
-        await auth.removeUser();
-        // 2) Hit Cognito Hosted UI logout
-        window.location.href =
-      `${COGNITO_DOMAIN}/logout?client_id=${CLIENT_ID}&logout_uri=${encodeURIComponent(LOGOUT_REDIRECT)}`;
-    };
-    return (
-    <Box sx={{ display: 'flex' }}>
-      {/* Sidebar */}
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          [`& .MuiDrawer-paper`]: {
-            width: drawerWidth,
-            boxSizing: 'border-box',
-          },
-        }}
-      >
-        <Toolbar />
-        <Box sx={{ overflow: 'auto', padding: 2 }}>
+  const [items, setItems] = React.useState([])
 
-          <Typography variant="h6">Menu</Typography>
-          {/* You can replace with <List> items */}
-          <Typography variant="body1" sx={{ mt: 2 }}>Upload</Typography>
-          <Typography variant="body1" sx={{ mt: 1 }}>Preprocess</Typography>
-          <Typography variant="body1" sx={{ mt: 1 }}>Results</Typography>
-        </Box>
-      </Drawer>
+  const handleAnalyse = (item) => { /* start preprocessing */ }
+  const handleDownload = (item) => { /* download from S3 */ }
+  const handleDelete = (item) => { /* delete from S3 */ }
 
-      {/* Main Content Area */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          bgcolor: 'background.default',
-          p: 3,
-        }}
-      >
-        {/* Top Bar */}
-        <AppBar
-          position="fixed"
-          sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}
-        >
-          <Toolbar sx={{ justifyContent: 'flex-end' }}>
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator
+            orientation="vertical"
+            className="mr-2 data-[orientation=vertical]:h-4"
+          />
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbPage>Member Homepage</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+            {/* Row 1: full width */}
+            <div className="h-40 md:col-span-3 rounded-xl border bg-card p-4 flex flex-col">
+              <div className="flex-1">
+                <DropzoneTile />
+              </div>
+              <ul className="mt-3 max-h-16 overflow-auto text-sm">
+                {/* your upload statuses (you already render these) */}
+              </ul>
+            </div>
 
-            <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}></Typography>
-            <IconButton color="inherit" onClick={(handleLogout)}>
-              <Avatar alt="User" />
-            </IconButton>
-          </Toolbar>
-        </AppBar>
+            {/* Row 2: full width */}
+            <div className="md:col-span-3 rounded-xl border bg-card p-4">
+              <S3BucketFiles />
+            </div>
 
-        {/* Push content below top bar */}
-        <Toolbar />
-        {children}
-      </Box>
-    </Box>
-  );
-};
-
-export default DashboardLayout;
+            {/* Row 3: three equal tiles */}
+            <div className="h-40 rounded-xl bg-muted/50" />
+            <div className="h-40 rounded-xl bg-muted/50" />
+            <div className="h-40 rounded-xl bg-muted/50" />
+          </div>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  )
+}
