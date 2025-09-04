@@ -44,11 +44,7 @@ export default function DashboardLayout() {
             {/* Files table */}
             <div className="md:col-span-3 rounded-xl border bg-card p-4">
               <S3BucketFiles
-                items={items}
-                onAnalyse={handleAnalyse}
-                onDownload={handleDownload}
-                onDelete={handleDelete}
-                onItemsChange={setItems}
+                enableSelection={false}
               />
             </div>
 

@@ -64,13 +64,19 @@ const formatDate = (d) =>
   }).format(d)
 
 // columns factory
-export function s3Columns({ onDownload, onDelete } = {}) {
-  return [
-    {
+export function s3Columns({ enableSelection = false, onDownload, onDelete } = {}) {
+  const cols = []
+
+  // Add select column only if enabled
+  if (enableSelection) {
+    cols.push({
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
           onCheckedChange={(v) => table.toggleAllPageRowsSelected(!!v)}
           aria-label="Select all"
         />
@@ -85,12 +91,21 @@ export function s3Columns({ onDownload, onDelete } = {}) {
       enableSorting: false,
       enableHiding: false,
       size: 36,
-    },
+    })
+  }
+
+  // Always include the normal columns
+  cols.push(
     {
       id: "name",
       accessorFn: (row) => displayName(row),
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button
+          variant="ghost"
+          onClick={() =>
+            column.toggleSorting(column.getIsSorted() === "asc")
+          }
+        >
           Name <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
@@ -122,13 +137,22 @@ export function s3Columns({ onDownload, onDelete } = {}) {
       accessorFn: (row) => toDate(getUploadedRaw(row)), // <- returns a Date for sorting
       sortingFn: "datetime",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button
+          variant="ghost"
+          onClick={() =>
+            column.toggleSorting(column.getIsSorted() === "asc")
+          }
+        >
           Uploaded <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
       cell: ({ getValue }) => {
         const d = getValue()
-        return d ? <span>{formatDate(d)}</span> : <span className="text-muted-foreground">—</span>
+        return d ? (
+          <span>{formatDate(d)}</span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )
       },
     },
     {
@@ -138,22 +162,31 @@ export function s3Columns({ onDownload, onDelete } = {}) {
         const item = row.original
         return (
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={() => onDownload?.(item)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onDownload?.(item)}
+            >
               <Download className=" h-4 w-4" />
             </Button>
-
-            <Button size="sm" variant="destructive" onClick={() => onDelete?.(item)}>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => onDelete?.(item)}
+            >
               <Trash2 className=" h-4 w-4" />
             </Button>
           </div>
         )
       },
-    },
-  ]
+    }
+  )
+
+  return cols
 }
 
 // generic table UI
-export function DataTable({ columns, data }) {
+export function DataTable({ columns, data, onSelectionChange, enableSelection = false }) {
   const [sorting, setSorting] = React.useState([])
   const [columnFilters, setColumnFilters] = React.useState([])
   const [columnVisibility, setColumnVisibility] = React.useState({})
@@ -166,12 +199,19 @@ export function DataTable({ columns, data }) {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: enableSelection ? setRowSelection : undefined,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    enableRowSelection: enableSelection,
   })
+
+  React.useEffect(() => {
+    if (!enableSelection || !onSelectionChange) return
+    const selected = table.getSelectedRowModel().flatRows.map(r => r.original)
+    onSelectionChange(selected)
+  }, [enableSelection, table, rowSelection, onSelectionChange])
 
   return (
     <div className="space-y-4">

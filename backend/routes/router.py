@@ -1,4 +1,5 @@
 # backend/routes/router.py
+from typing import Optional
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Query
 from pydantic import BaseModel
 import os, io, pandas as pd, boto3
@@ -6,7 +7,8 @@ from fastapi.responses import JSONResponse
 from botocore.exceptions import ClientError
 from backend.preprocessing import dataanalysis
 from .s3_utils import s3_dataset_key, put_bytes, put_pickle_df, get_pickle_df, S3_BUCKET
-from backend.auth import verify_cognito_token   # <-- add
+from backend.auth import verify_cognito_token
+from backend.utils.json_utils import safe_json, df_to_json_records
 
 router = APIRouter()
 
@@ -15,7 +17,8 @@ class PreprocessRequest(BaseModel):
 
 class TopRowsRequest(BaseModel):
     dataset_id: str
-    target_column: str
+    target_column: Optional[str] = None # original was just "str" kept it in for future use?
+
 
 @router.post("/upload_csv")
 async def upload_csv(
@@ -118,14 +121,14 @@ def begin_preprocessing(
     try:
         df = get_pickle_df(req.dataset_id)
         summary = dataanalysis.get_dataanalysis_summary(df)
-        return {"message": "Preprocessing ready", **summary}
+        return {"message": "", **summary} #This was Message: "Preprocessing complete"
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Preprocessing failed: {e}")
 
 @router.post("/top_rows")
 def top_rows(
     req: TopRowsRequest,
-    claims = Depends(verify_cognito_token),      # <-- add
+    claims = Depends(verify_cognito_token),
 ):
     user_sub = claims["sub"]
     key = req.dataset_id if req.dataset_id.endswith(".pkl") else f"{req.dataset_id}.pkl"
@@ -134,7 +137,7 @@ def top_rows(
 
     try:
         df = get_pickle_df(key)
-        top = df.head(10).to_dict(orient="records")
+        top = df_to_json_records(df.head(10))  # NaN/Inf → None, numpy → py types
         return {"top_rows": top}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to load DataFrame: {e}")
