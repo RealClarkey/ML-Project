@@ -4,8 +4,8 @@ from jose import jwt
 from fastapi import Header, HTTPException
 
 COGNITO_REGION = "eu-north-1"
-USER_POOL_ID = "eu-north-1_VX4lzVaon"          # <-- your pool id
-CLIENT_ID = "5al6bqqs0k4pmcm35d3d7vjt02"       # <-- your app client id
+USER_POOL_ID = "eu-north-1_TuV6aDou8"          # <-- your pool id
+CLIENT_ID = "3lladsnofjk8tbvatgou31qhs3"       # <-- your app client id
 
 ISSUER = f"https://cognito-idp.{COGNITO_REGION}.amazonaws.com/{USER_POOL_ID}"
 JWKS_URL = f"{ISSUER}/.well-known/jwks.json"

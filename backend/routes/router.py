@@ -2,13 +2,14 @@
 from typing import Optional
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Query
 from pydantic import BaseModel
-import os, io, pandas as pd, boto3
+import os, time, io, pandas as pd, boto3, numpy as np
 from fastapi.responses import JSONResponse
 from botocore.exceptions import ClientError
 from backend.preprocessing import dataanalysis
 from .s3_utils import s3_dataset_key, put_bytes, put_pickle_df, get_pickle_df, S3_BUCKET
 from backend.auth import verify_cognito_token
 from backend.utils.json_utils import safe_json, df_to_json_records
+from typing import Optional, Dict, Any
 
 router = APIRouter()
 
@@ -18,6 +19,40 @@ class PreprocessRequest(BaseModel):
 class TopRowsRequest(BaseModel):
     dataset_id: str
     target_column: Optional[str] = None # original was just "str" kept it in for future use?
+
+class PreprocessAndSaveRequest(BaseModel):
+    dataset_id: str                    # S3 key to original .pkl
+    strategy: Optional[str] = "basic"  # for future variations
+    options: Optional[Dict[str, Any]] = None
+
+def basic_preprocess(df: pd.DataFrame, options: dict | None = None) -> pd.DataFrame:
+    """Simple example preprocessing — replace with your own pipeline."""
+    opts = options or {}
+    df = df.copy()
+
+    # 1. Normalize column names
+    df.columns = [str(c).strip().lower() for c in df.columns]
+
+    # 2. Drop all-NaN columns
+    if opts.get("drop_all_nan", True):
+        df = df.dropna(axis=1, how="all")
+
+    # 3. Fill numeric NaN with median
+    num_cols = df.select_dtypes(include=[np.number]).columns
+    for c in num_cols:
+        med = df[c].median(skipna=True)
+        if pd.isna(med):
+            continue
+        df[c] = df[c].fillna(med)
+
+    # 4. Fill categorical NaN with mode
+    cat_cols = df.select_dtypes(exclude=[np.number]).columns
+    for c in cat_cols:
+        mode = df[c].mode(dropna=True)
+        if len(mode) > 0:
+            df[c] = df[c].fillna(mode.iloc[0])
+
+    return df
 
 
 @router.post("/upload_csv")
@@ -51,31 +86,40 @@ async def upload_csv(
 
 @router.get("/datasets")
 def list_datasets(
-    claims = Depends(verify_cognito_token),      # <-- add
+    claims = Depends(verify_cognito_token),
 ):
     user_sub = claims["sub"]
     s3 = boto3.client("s3", region_name=os.environ.get("AWS_REGION", "eu-north-1"))
-    prefix = f"{user_sub}/datasets/"
-    resp = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix=prefix)
+    prefixes = [f"{user_sub}/datasets/", f"{user_sub}/processed/"]
 
-    datasets = []
-    for obj in resp.get("Contents", []):
-        key = obj["Key"]
-        if key.endswith(".pkl"):
+    out = []
+    for prefix in prefixes:
+        resp = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix=prefix)
+        for obj in resp.get("Contents", []):
+            key = obj["Key"]
+            if not key.endswith(".pkl"):
+                continue
             url = s3.generate_presigned_url(
                 "get_object",
-                Params={"Bucket": S3_BUCKET, "Key": key},
+                Params={
+                    "Bucket": S3_BUCKET,
+                    "Key": key,
+                    "ResponseContentDisposition": f'attachment; filename="{key.split("/")[-1]}"',
+                },
                 ExpiresIn=3600,
             )
-            datasets.append({
+            out.append({
                 "id": key,
                 "key": key,
                 "name": key.split("/")[-1],
                 "format": "pkl",
                 "uploadedAt": obj["LastModified"].isoformat(),
                 "downloadUrl": url,
+                "folder": "processed" if "/processed/" in key else "datasets",
             })
-    return JSONResponse(content=datasets)
+    # newest first (optional)
+    out.sort(key=lambda r: r["uploadedAt"], reverse=True)
+    return out
 # Delete dataset from S3 bucket.
 # Used from the data table field in membership area.
 @router.delete("/datasets")
@@ -141,3 +185,54 @@ def top_rows(
         return {"top_rows": top}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to load DataFrame: {e}")
+
+@router.post("/preprocess_and_save")
+def preprocess_and_save(
+    req: PreprocessAndSaveRequest,
+    claims = Depends(verify_cognito_token),
+):
+    user_sub = claims["sub"]
+    if not req.dataset_id.startswith(f"{user_sub}/"):
+        raise HTTPException(status_code=403, detail="Not your dataset")
+
+    # 1) load
+    try:
+        df = get_pickle_df(req.dataset_id)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Original dataset not found: {e}")
+
+    # 2) preprocess
+    try:
+        df_proc = basic_preprocess(df, req.options)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Preprocessing failed: {e}")
+
+    # 3) save as new key (processed/)
+    base = os.path.basename(req.dataset_id)                  # foo.pkl
+    stem = base[:-4] if base.endswith(".pkl") else base      # foo
+    ts = int(time.time())
+    new_key = f"{user_sub}/processed/{stem}__preprocessed_{ts}.pkl"
+    try:
+        put_pickle_df(new_key, df_proc)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save preprocessed dataset: {e}")
+
+    # 4) presign and return
+    s3 = boto3.client("s3", region_name=os.environ.get("AWS_REGION", "eu-north-1"))
+    url = s3.generate_presigned_url(
+        "get_object",
+        Params={
+            "Bucket": S3_BUCKET,
+            "Key": new_key,
+            "ResponseContentDisposition": f'attachment; filename="{os.path.basename(new_key)}"',
+        },
+        ExpiresIn=3600,
+    )
+    return {
+        "message": "Preprocessed dataset saved",
+        "original_key": req.dataset_id,
+        "new_key": new_key,
+        "downloadUrl": url,
+        "rows": int(len(df_proc)),
+        "cols": int(df_proc.shape[1]),
+    }

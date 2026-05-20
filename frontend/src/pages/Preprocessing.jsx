@@ -1,6 +1,6 @@
 // src/pages/Analyse.jsx
-import React from "react";
+import PreprocessingLayout from "@/components/PreprocessingLayout.jsx";
 
 export default function Preprocessing() {
-  return <div>Preprocessing yessir Page</div>;
+  return <PreprocessingLayout />
 }

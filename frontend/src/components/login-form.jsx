@@ -96,7 +96,8 @@ export function LoginForm({
               </div>
               <div className="text-center text-sm">
                 Don&apos;t have an account?{" "}
-                <a href="#" className="underline underline-offset-4">
+                <a href="https://eu-north-1tuv6adou8.auth.eu-north-1.amazoncognito.com/signup?client_id=3lladsnofjk8tbvatgou31qhs3&response_type=code&scope=email+openid+profile&redirect_uri=http://localhost:5173"
+  className="underline underline-offset-4">
                   Sign up
                 </a>
               </div>
